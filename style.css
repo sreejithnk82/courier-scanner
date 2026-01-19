@@ -1,0 +1,42 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 10px;
+  background: #f4f4f4;
+}
+
+h2, h3 {
+  text-align: center;
+}
+
+#reader {
+  width: 100%;
+  max-width: 360px;
+  margin: 10px auto;
+  border: 2px solid #333;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+button {
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#scanList {
+  list-style: none;
+  padding: 0;
+}
+
+#scanList li {
+  background: white;
+  margin: 6px 0;
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 4px;
+}
