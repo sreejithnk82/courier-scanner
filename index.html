@@ -1,111 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Courier Scanner 2026</title>
-    <!-- Reliable CDNs -->
-    <script src="https://unpkg.com"></script>
-    <script src="https://unpkg.com"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; text-align: center; background: #f9f9f9; }
-        #reader { width: 100%; max-width: 400px; margin: auto; background: #000; border-radius: 8px; }
-        .btn { padding: 15px; margin: 10px 0; width: 100%; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
-        .btn-start { background: #007bff; }
-        .btn-export { background: #28a745; }
-        #status { font-size: 0.9em; margin: 10px; color: #555; }
-        .scan-item { background: #fff; padding: 10px; margin: 10px 0; border-radius: 5px; border-left: 5px solid #007bff; text-align: left; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Courier Scanner</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Libraries MUST load first -->
+  <script src="libs/html5-qrcode.min.js"></script>
+  <script src="libs/tesseract.min.js"></script>
 </head>
 <body>
 
-    <h2>Bulk Booking</h2>
-    <p id="status">Loading libraries... please wait.</p>
+  <h2>Courier Consignment Scanner</h2>
 
-    <div id="reader" style="display:none;"></div>
-    
-    <button id="scan-btn" class="btn btn-start" onclick="startScanning()" disabled>+ Add New Consignment</button>
-    <button class="btn btn-export" onclick="exportCSV()">Download CSV</button>
+  <div id="reader"></div>
 
-    <div id="log"></div>
+  <div class="buttons">
+    <button id="startBtn">Start Camera</button>
+    <button id="addBtn" disabled>Add New</button>
+    <button id="downloadBtn">Download CSV</button>
+  </div>
 
-    <script>
-        let bulkData = [];
-        let scanner;
+  <h3>Scanned Items</h3>
+  <ul id="scanList"></ul>
 
-        // 1. Wait for everything to load properly
-        const checkInterval = setInterval(() => {
-            if (typeof Html5Qrcode !== "undefined" && typeof Tesseract !== "undefined") {
-                clearInterval(checkInterval);
-                document.getElementById('status').innerText = "Libraries Ready.";
-                document.getElementById('scan-btn').disabled = false; // Enable button
-                scanner = new Html5Qrcode("reader");
-            }
-        }, 500);
+  <canvas id="snapshot" hidden></canvas>
 
-        async function startScanning() {
-            document.getElementById('reader').style.display = 'block';
-            document.getElementById('status').innerText = "Camera starting...";
-            
-            try {
-                await scanner.start(
-                    { facingMode: "environment" }, 
-                    { fps: 10, qrbox: 250 }, 
-                    onScanSuccess
-                );
-            } catch (err) {
-                document.getElementById('status').innerText = "Camera error: " + err;
-            }
-        }
-
-        async function onScanSuccess(decodedText) {
-            document.getElementById('status').innerText = "Barcode found! capturing address...";
-            
-            // Capture image for OCR
-            const video = document.querySelector('video');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-
-            // Stop camera immediately
-            await scanner.stop();
-            document.getElementById('reader').style.display = 'none';
-
-            // Run OCR locally
-            Tesseract.recognize(canvas, 'eng').then(({ data: { text } }) => {
-                const pincode = text.match(/\d{6}/) || ["N/A"];
-                const record = {
-                    barcode: decodedText,
-                    pincode: pincode,
-                    address: text.replace(/,/g, ' ').replace(/\n/g, ' ').trim().substring(0, 100)
-                };
-                bulkData.push(record);
-                updateUI();
-                document.getElementById('status').innerText = "Saved. Ready for next.";
-            });
-        }
-
-        function updateUI() {
-            const log = document.getElementById('log');
-            log.innerHTML = bulkData.slice().reverse().map(item => `
-                <div class="scan-item">
-                    <b>ID: ${item.barcode}</b><br>
-                    PIN: ${item.pincode}<br>
-                    <small>${item.address}</small>
-                </div>
-            `).join('');
-        }
-
-        function exportCSV() {
-            if (bulkData.length === 0) return alert("No data!");
-            let csv = "Barcode,Pincode,Address\n" + bulkData.map(r => `${r.barcode},${r.pincode},"${r.address}"`).join("\n");
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `bulk_booking.csv`;
-            a.click();
-        }
-    </script>
+  <script src="app.js"></script>
 </body>
 </html>
