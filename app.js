@@ -1,120 +1,126 @@
-let qr;
-let records = [];
-let current = {};
+document.addEventListener("DOMContentLoaded", () => {
 
-const scanNewBtn = document.getElementById("scanNewBtn");
-const reader = document.getElementById("reader");
-const status = document.getElementById("status");
+  let qr;
+  let records = [];
+  let current = {};
 
-scanNewBtn.onclick = startBarcodeScan;
+  const scanNewBtn = document.getElementById("scanNewBtn");
+  const reader = document.getElementById("reader");
+  const status = document.getElementById("status");
+  const okBtn = document.getElementById("okBtn");
+  const exportBtn = document.getElementById("exportBtn");
 
-function startBarcodeScan() {
-  resetUI();
-  status.textContent = "Scanning barcode...";
-  reader.hidden = false;
+  scanNewBtn.onclick = startBarcodeScan;
 
-  qr = new Html5Qrcode("reader");
-  qr.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    onBarcodeDetected
-  );
-}
+  function startBarcodeScan() {
+    resetUI();
+    status.textContent = "Scanning barcode...";
+    reader.hidden = false;
 
-function onBarcodeDetected(text) {
-  qr.stop();
-  reader.hidden = true;
+    qr = new Html5Qrcode("reader");
+    qr.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onBarcodeDetected
+    );
+  }
 
-  current = { barcode: text };
-  status.textContent = "Barcode detected. Scanning address...";
+  function onBarcodeDetected(text) {
+    qr.stop();
+    reader.hidden = true;
 
-  setTimeout(startAddressScan, 500);
-}
+    current = { barcode: text };
+    status.textContent = "Barcode detected. Scanning address...";
 
-function startAddressScan() {
-  reader.hidden = false;
+    setTimeout(startAddressScan, 500);
+  }
 
-  qr.start(
-    { facingMode: "environment" },
-    { fps: 5, qrbox: 300 },
-    () => {}
-  );
+  function startAddressScan() {
+    reader.hidden = false;
 
-  setTimeout(captureAndOCR, 2500);
-}
+    qr.start(
+      { facingMode: "environment" },
+      { fps: 5, qrbox: 300 },
+      () => {}
+    );
 
-async function captureAndOCR() {
-  const video = document.querySelector("#reader video");
-  const canvas = document.getElementById("snapshot");
-  const ctx = canvas.getContext("2d");
+    setTimeout(captureAndOCR, 2500);
+  }
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0);
+  async function captureAndOCR() {
+    const video = document.querySelector("#reader video");
+    const canvas = document.getElementById("snapshot");
+    const ctx = canvas.getContext("2d");
 
-  qr.stop();
-  reader.hidden = true;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
 
-  status.textContent = "Processing address...";
+    qr.stop();
+    reader.hidden = true;
 
-  const result = await Tesseract.recognize(canvas, "eng");
-  fillForm(result.data.text);
-}
+    status.textContent = "Processing address...";
 
-function fillForm(text) {
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    const result = await Tesseract.recognize(canvas, "eng");
+    fillForm(result.data.text);
+  }
 
-  const pin = text.match(/\b\d{6}\b/);
-  const mob = text.match(/\b\d{10}\b/);
+  function fillForm(text) {
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
 
-  document.getElementById("name").value = lines[0] || "";
-  document.getElementById("address").value = lines.slice(1).join(", ");
-  document.getElementById("pincode").value = pin ? pin[0] : "";
-  document.getElementById("mobile").value = mob ? mob[0] : "";
+    const pin = text.match(/\b\d{6}\b/);
+    const mob = text.match(/\b\d{10}\b/);
 
-  status.textContent = "";
-  document.getElementById("editForm").hidden = false;
-}
+    document.getElementById("name").value = lines[0] || "";
+    document.getElementById("address").value = lines.slice(1).join(", ");
+    document.getElementById("pincode").value = pin ? pin[0] : "";
+    document.getElementById("mobile").value = mob ? mob[0] : "";
 
-document.getElementById("okBtn").onclick = () => {
-  current.name = document.getElementById("name").value;
-  current.address = document.getElementById("address").value;
-  current.pincode = document.getElementById("pincode").value;
-  current.mobile = document.getElementById("mobile").value;
+    status.textContent = "";
+    document.getElementById("editForm").hidden = false;
+  }
 
-  records.push({ ...current });
-  addToList(current);
+  okBtn.onclick = () => {
+    current.name = document.getElementById("name").value;
+    current.address = document.getElementById("address").value;
+    current.pincode = document.getElementById("pincode").value;
+    current.mobile = document.getElementById("mobile").value;
 
-  resetState();
-};
+    records.push({ ...current });
+    addToList(current);
 
-function addToList(item) {
-  const li = document.createElement("li");
-  li.textContent = `${item.barcode} | ${item.pincode}`;
-  document.getElementById("scanList").appendChild(li);
-}
+    resetState();
+  };
 
-function resetState() {
-  current = {};
-  document.getElementById("editForm").hidden = true;
-  status.textContent = "";
-}
+  function addToList(item) {
+    const li = document.createElement("li");
+    li.textContent = `${item.barcode} | ${item.pincode}`;
+    document.getElementById("scanList").appendChild(li);
+  }
 
-function resetUI() {
-  document.getElementById("editForm").hidden = true;
-  reader.hidden = true;
-  status.textContent = "";
-}
+  function resetState() {
+    current = {};
+    document.getElementById("editForm").hidden = true;
+    status.textContent = "";
+  }
 
-document.getElementById("exportBtn").onclick = () => {
-  let csv = "Barcode,Name,Address,Pincode,Mobile\n";
-  records.forEach(r => {
-    csv += `"${r.barcode}","${r.name}","${r.address}","${r.pincode}","${r.mobile}"\n`;
-  });
+  function resetUI() {
+    document.getElementById("editForm").hidden = true;
+    reader.hidden = true;
+    status.textContent = "";
+  }
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "courier_export.csv";
-  a.click();
-};
+  exportBtn.onclick = () => {
+    let csv = "Barcode,Name,Address,Pincode,Mobile\n";
+    records.forEach(r => {
+      csv += `"${r.barcode}","${r.name}","${r.address}","${r.pincode}","${r.mobile}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "courier_export.csv";
+    a.click();
+  };
+
+});
