@@ -1,33 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Courier Scanner</title>
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- Libraries MUST load first -->
-  <script src="lib/html5-qrcode.min.js"></script>
-  <script src="lib/tesseract.min.js"></script>
+  <script src="libs/html5-qrcode.min.js"></script>
+  <script src="libs/tesseract.min.js"></script>
 </head>
 <body>
 
-  <h2>Courier Consignment Scanner</h2>
+<h2>Courier Scan</h2>
 
-  <div id="reader"></div>
+<!-- STEP 1 -->
+<button id="scanNewBtn">Scan New</button>
 
-  <div class="buttons">
-    <button id="startBtn">Start Camera</button>
-    <button id="addBtn" disabled>Add New</button>
-    <button id="downloadBtn">Download CSV</button>
-  </div>
+<!-- CAMERA -->
+<div id="reader" hidden></div>
 
-  <h3>Scanned Items</h3>
-  <ul id="scanList"></ul>
+<!-- BARCODE STEP -->
+<div id="barcodeStep" hidden>
+  <p><b>Barcode:</b> <span id="barcodeText"></span></p>
+  <button id="nextToAddress">Next</button>
+</div>
 
-  <canvas id="snapshot" hidden></canvas>
+<!-- ADDRESS STEP -->
+<div id="addressStep" hidden>
+  <p>Scanning Address…</p>
+</div>
 
-  <script src="app.js"></script>
+<!-- CONFIRMATION -->
+<div id="confirmStep" hidden>
+  <h3>Confirm</h3>
+  <p><b>Barcode:</b> <span id="cBarcode"></span></p>
+  <p><b>From:</b> <span id="fromAddr"></span></p>
+  <p><b>To:</b> <span id="toAddr"></span></p>
+  <p><b>Pincode:</b> <span id="pin"></span></p>
+  <p><b>Mobile:</b> <span id="mobile"></span></p>
+
+  <button id="okBtn">OK</button>
+</div>
+
+<!-- LIST -->
+<h3>Scanned List</h3>
+<ul id="scanList"></ul>
+
+<button id="exportBtn">Export CSV</button>
+
+<canvas id="snapshot" hidden></canvas>
+
+<script src="app.js"></script>
 </body>
 </html>
