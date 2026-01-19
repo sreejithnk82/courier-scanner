@@ -66,16 +66,25 @@
         }
 
         // 2. Start Camera with Hardware Acceleration
-        function startCamera() {
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                useBarCodeDetectorIfSupported: true // 2026 Native Support
-            };
+       function startCamera() {
+    document.getElementById('status').innerText = "Initializing camera...";
+    
+    // 1-second delay fixes most Android initialization errors
+    setTimeout(() => {
+        const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            useBarCodeDetectorIfSupported: true 
+        };
 
-            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-                .catch(err => document.getElementById('status').innerText = "Error: " + err);
-        }
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+            .catch(err => {
+                document.getElementById('status').innerText = "Camera Error: " + err;
+                console.error(err);
+            });
+    }, 1000); 
+}
+
 
         // 3. Process Scan (Barcode + OCR)
         async function onScanSuccess(decodedText) {
