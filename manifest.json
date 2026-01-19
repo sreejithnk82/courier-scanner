@@ -1,0 +1,8 @@
+{
+  "name": "Courier Scanner",
+  "short_name": "CourierScan",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
