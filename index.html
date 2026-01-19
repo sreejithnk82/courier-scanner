@@ -6,7 +6,6 @@
   <title>Courier Scanner</title>
 
   <link rel="stylesheet" href="style.css">
-
   <script src="lib/html5-qrcode.min.js"></script>
   <script src="lib/tesseract.min.js"></script>
 </head>
@@ -14,36 +13,32 @@
 
 <h2>Courier Scan</h2>
 
-<!-- STEP 1 -->
 <button id="scanNewBtn">Scan New</button>
 
-<!-- CAMERA -->
 <div id="reader" hidden></div>
 
-<!-- BARCODE STEP -->
-<div id="barcodeStep" hidden>
-  <p><b>Barcode:</b> <span id="barcodeText"></span></p>
-  <button id="nextToAddress">Next</button>
-</div>
+<!-- STATUS -->
+<p id="status"></p>
 
-<!-- ADDRESS STEP -->
-<div id="addressStep" hidden>
-  <p>Scanning Address…</p>
-</div>
+<!-- EDIT FORM -->
+<div id="editForm" hidden>
+  <h3>Edit Details</h3>
 
-<!-- CONFIRMATION -->
-<div id="confirmStep" hidden>
-  <h3>Confirm</h3>
-  <p><b>Barcode:</b> <span id="cBarcode"></span></p>
-  <p><b>From:</b> <span id="fromAddr"></span></p>
-  <p><b>To:</b> <span id="toAddr"></span></p>
-  <p><b>Pincode:</b> <span id="pin"></span></p>
-  <p><b>Mobile:</b> <span id="mobile"></span></p>
+  <label>Name</label>
+  <input id="name" type="text">
+
+  <label>Address</label>
+  <textarea id="address"></textarea>
+
+  <label>Pincode</label>
+  <input id="pincode" type="text">
+
+  <label>Mobile</label>
+  <input id="mobile" type="text">
 
   <button id="okBtn">OK</button>
 </div>
 
-<!-- LIST -->
 <h3>Scanned List</h3>
 <ul id="scanList"></ul>
 
