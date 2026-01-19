@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Courier Scanner</title>
+    <!-- Use Local copies for "No External API" requirement -->
+    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            border: 1px solid #ccc;
+        }
+
+        #result-log {
+            margin-top: 20px;
+            text-align: left;
+            border: 1px solid #333;
+            padding: 10px;
+            height: 200px;
+            overflow-y: scroll;
+        }
+
+        .status {
+            color: blue;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: green;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Local Courier Scanner</h2>
+    <div id="reader"></div>
+
+    <p id="status" class="status">Camera Status: Ready</p>
+
+    <button onclick="downloadCSV()">Download Bulk Data (CSV)</button>
+
+    <h3>Scanned Records:</h3>
+    <div id="result-log"></div>
+
+    <script>const scanLog = [];
+        const statusEl = document.getElementById('status');
+        const logEl = document.getElementById('result-log');
+
+        // 1. Initialize Barcode Scanner
+        const html5QrCode = new Html5Qrcode("reader");
+
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            // Stop scanning briefly to capture the address
+            statusEl.innerText = "Barcode Found: " + decodedText + ". Reading Address...";
+
+            // 2. Capture the current frame from the camera for OCR
+            const videoElement = document.querySelector('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            canvas.getContext('2d').drawImage(videoElement, 0, 0);
+
+            // 3. Run Tesseract OCR locally
+            Tesseract.recognize(canvas, 'eng').then(({ data: { text } }) => {
+                // 4. Extract Pincode using Regex (6-digit pattern)
+                const pincodeMatch = text.match(/\d{6}/);
+                const pincode = pincodeMatch ? pincodeMatch[0] : "Not Found";
+
+                // 5. Clean up address (simple approach: use the whole text or lines near pincode)
+                const record = {
+                    barcode: decodedText,
+                    pincode: pincode,
+                    fullAddress: text.replace(/\n/g, ' ').substring(0, 100), // First 100 chars
+                    timestamp: new Date().toLocaleTimeString()
+                };
+
+                saveRecord(record);
+            });
+        };
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        // Start Camera
+        html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+            .catch(err => statusEl.innerText = "Error: " + err);
+
+        function saveRecord(record) {
+            scanLog.push(record);
+            const entry = document.createElement('div');
+            entry.innerHTML = `<strong>${record.barcode}</strong> | ${record.pincode} | ${record.fullAddress}... <hr>`;
+            logEl.prepend(entry);
+            statusEl.innerText = "Ready for next scan";
+        }
+
+        // 6. Export to CSV for Bulk Booking
+        function downloadCSV() {
+            let csv = "Barcode,Pincode,Address\n";
+            scanLog.forEach(row => {
+                csv += `"${row.barcode}","${row.pincode}","${row.fullAddress}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'bulk_courier.csv');
+            a.click();
+        }</script>
+</body>
+</html>
