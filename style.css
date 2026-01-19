@@ -6,6 +6,7 @@ body {
 button {
   padding: 10px;
   margin: 6px 0;
+  width: 100%;
 }
 
 #reader {
@@ -22,12 +23,12 @@ input, textarea {
 }
 
 textarea {
-  height: 80px;
+  height: 90px;
 }
 
 li {
-  background: #f2f2f2;
-  margin-bottom: 6px;
-  padding: 8px;
   list-style: none;
+  background: #f2f2f2;
+  padding: 8px;
+  margin-bottom: 6px;
 }
