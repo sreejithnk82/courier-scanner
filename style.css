@@ -1,42 +1,27 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   padding: 10px;
-  background: #f4f4f4;
 }
 
-h2, h3 {
-  text-align: center;
+button {
+  padding: 10px;
+  margin: 6px 0;
 }
 
 #reader {
   width: 100%;
   max-width: 360px;
+  border: 2px solid #000;
   margin: 10px auto;
-  border: 2px solid #333;
 }
 
-.buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0;
-}
-
-button {
-  padding: 10px 14px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-#scanList {
-  list-style: none;
+ul {
   padding: 0;
 }
 
-#scanList li {
-  background: white;
-  margin: 6px 0;
+li {
+  list-style: none;
+  background: #f2f2f2;
   padding: 8px;
-  font-size: 14px;
-  border-radius: 4px;
+  margin-bottom: 6px;
 }
