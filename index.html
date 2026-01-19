@@ -5,36 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Courier Scanner</title>
 
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <script src="lib/html5-qrcode.min.js"></script>
-  <script src="lib/tesseract.min.js"></script>
+
+  <script src="libs/html5-qrcode.min.js"></script>
+  <script src="libs/tesseract.min.js"></script>
 </head>
 <body>
 
-<h2>Courier Scan</h2>
+<h2>Courier Scanner</h2>
 
 <button id="scanNewBtn">Scan New</button>
+<button id="installBtn" hidden>Install App</button>
 
 <div id="reader" hidden></div>
 
-<!-- STATUS -->
 <p id="status"></p>
+
+<!-- ADDRESS CAPTURE -->
+<button id="captureAddrBtn" hidden>Capture Address</button>
 
 <!-- EDIT FORM -->
 <div id="editForm" hidden>
-  <h3>Edit Details</h3>
+  <h3>Confirm Details</h3>
+
+  <label>Barcode</label>
+  <input id="barcode" readonly>
 
   <label>Name</label>
-  <input id="name" type="text">
+  <input id="name">
 
-  <label>Address</label>
+  <label>TO Address</label>
   <textarea id="address"></textarea>
 
   <label>Pincode</label>
-  <input id="pincode" type="text">
+  <input id="pincode">
 
   <label>Mobile</label>
-  <input id="mobile" type="text">
+  <input id="mobile">
 
   <button id="okBtn">OK</button>
 </div>
