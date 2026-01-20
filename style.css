@@ -1,34 +1,158 @@
+/* ---------- RESET ---------- */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
-  font-family: Arial;
-  padding: 10px;
+  margin: 0;
+  padding: 12px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  background: #f4f6f8;
+  color: #222;
 }
 
-button {
-  padding: 10px;
+/* ---------- SCREENS ---------- */
+section {
+  display: none;
+}
+
+section.active {
+  display: block;
+}
+
+/* ---------- HEADINGS ---------- */
+h3 {
+  margin: 8px 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ---------- BUTTONS ---------- */
+.btn {
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #0066ff;
+  color: #fff;
+}
+
+.btn:disabled {
+  background: #9fbfff;
+}
+
+.btn.secondary {
+  background: #444;
+}
+
+/* ---------- CAMERA ---------- */
+video {
+  width: 100%;
+  max-height: 65vh;
+  border-radius: 10px;
+  background: #000;
+  object-fit: cover;
+}
+
+/* ---------- OVERLAY CANVAS ---------- */
+#overlayCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+}
+
+/* Wrap video + overlay */
+#captureScreen {
+  position: relative;
+}
+
+/* ---------- TEXT ---------- */
+p {
   margin: 6px 0;
-  width: 100%;
+  font-size: 14px;
+  word-break: break-all;
 }
 
-#reader {
-  width: 100%;
-  max-width: 360px;
-  border: 2px solid #000;
-  margin: 10px auto;
+/* ---------- FORM ---------- */
+label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 6px;
+  display: block;
 }
 
-input, textarea {
+input,
+textarea {
   width: 100%;
-  margin-bottom: 8px;
-  padding: 6px;
+  padding: 10px;
+  margin: 4px 0 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
 }
 
 textarea {
-  height: 90px;
+  resize: vertical;
+}
+
+/* Readonly barcode */
+input[readonly] {
+  background: #eee;
+  font-weight: 600;
+}
+
+/* ---------- LIST ---------- */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 li {
-  list-style: none;
-  background: #f2f2f2;
-  padding: 8px;
+  background: #fff;
   margin-bottom: 6px;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ---------- HOME ---------- */
+#homeScreen button {
+  margin-bottom: 10px;
+}
+
+/* ---------- INSTALL BUTTON ---------- */
+#installBtn {
+  background: #0a8f08;
+}
+
+/* ---------- OCR SELECTION HINT ---------- */
+#captureScreen::after {
+  content: "Drag to select address area, then tap Capture";
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0,0,0,0.6);
+  padding: 6px;
+  border-radius: 6px;
+}
+
+/* ---------- DESKTOP ADJUSTMENTS ---------- */
+@media (min-width: 768px) {
+  body {
+    max-width: 500px;
+    margin: auto;
+  }
 }
