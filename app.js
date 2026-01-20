@@ -1,135 +1,216 @@
+let currentBarcode = "";
+let cropRect = null;
+let db;
+let stream;
+
+/* ------------------ INIT ------------------ */
 document.addEventListener("DOMContentLoaded", () => {
+  initDB();
+  bindUI();
+  loadList();
+});
 
-let qr;
-let records = [];
-let current = {};
-let deferredPrompt = null;
+/* ------------------ UI ------------------ */
+function bindUI() {
+  scanNewBtn.onclick = startBarcodeScan;
+  barcodeNextBtn.onclick = startAddressCamera;
+  captureBtn.onclick = captureAndOCR;
+  okBtn.onclick = saveRecord;
+  exportBtn.onclick = exportCSV;
+}
 
-const scanNewBtn = document.getElementById("scanNewBtn");
-const reader = document.getElementById("reader");
-const status = document.getElementById("status");
-const captureAddrBtn = document.getElementById("captureAddrBtn");
+function showScreen(id) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
 
-scanNewBtn.onclick = startBarcodeScan;
+/* ------------------ BARCODE ------------------ */
+const codeReader = new ZXing.BrowserMultiFormatReader();
 
-// ---------------- BARCODE SCAN ----------------
 function startBarcodeScan() {
-  resetUI();
-  status.textContent = "Scanning barcode...";
-  reader.hidden = false;
+  showScreen("barcodeScreen");
+  barcodeText.innerText = "";
+  barcodeNextBtn.disabled = true;
 
-  qr = new Html5Qrcode("reader");
-  qr.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    barcodeDetected
-  );
+  codeReader.decodeFromVideoDevice(null, barcodeVideo, (result) => {
+    if (result) {
+      if (isDuplicate(result.text)) {
+        alert("Duplicate barcode!");
+        return;
+      }
+      currentBarcode = result.text;
+      barcodeText.innerText = result.text;
+      barcodeNextBtn.disabled = false;
+      codeReader.reset();
+    }
+  });
 }
 
-function barcodeDetected(text) {
-  qr.stop();
-  reader.hidden = false;
+/* ------------------ ADDRESS CAMERA ------------------ */
+async function startAddressCamera() {
+  showScreen("captureScreen");
 
-  current = { barcode: text };
-  status.textContent = "Barcode detected. Align TO address and click Capture.";
-  captureAddrBtn.hidden = false;
+  stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  addressVideo.srcObject = stream;
+  addressVideo.play();
+
+  initCropUI();
 }
 
-// ---------------- ADDRESS CAPTURE ----------------
-captureAddrBtn.onclick = captureAddress;
-
-async function captureAddress() {
-  captureAddrBtn.hidden = true;
-  status.textContent = "Processing address...";
-
-  const video = document.querySelector("#reader video");
-  const canvas = document.getElementById("snapshot");
+/* ------------------ CROPPING UI ------------------ */
+function initCropUI() {
+  const canvas = overlayCanvas;
   const ctx = canvas.getContext("2d");
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  canvas.width = addressVideo.clientWidth;
+  canvas.height = addressVideo.clientHeight;
 
-  // Simple contrast boost
-  ctx.filter = "contrast(1.4) brightness(1.1)";
-  ctx.drawImage(video, 0, 0);
+  let startX, startY, dragging = false;
 
-  qr.stop();
-  reader.hidden = true;
+  canvas.onmousedown = e => {
+    dragging = true;
+    startX = e.offsetX;
+    startY = e.offsetY;
+  };
 
-  const result = await Tesseract.recognize(canvas, "eng");
-  fillForm(result.data.text);
+  canvas.onmousemove = e => {
+    if (!dragging) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
+  };
+
+  canvas.onmouseup = e => {
+    dragging = false;
+    cropRect = {
+      x: startX,
+      y: startY,
+      w: e.offsetX - startX,
+      h: e.offsetY - startY
+    };
+  };
 }
 
-// ---------------- OCR PARSE ----------------
-function fillForm(text) {
-  const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 4);
+/* ------------------ CAPTURE + OCR ------------------ */
+function captureAndOCR() {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
 
-  document.getElementById("barcode").value = current.barcode;
-  document.getElementById("name").value = lines[0] || "";
-  document.getElementById("address").value = lines.join(", ");
+  const vw = addressVideo.videoWidth;
+  const vh = addressVideo.videoHeight;
+
+  canvas.width = vw;
+  canvas.height = vh;
+
+  ctx.drawImage(addressVideo, 0, 0);
+
+  let img = ctx.getImageData(
+    cropRect.x * vw / overlayCanvas.width,
+    cropRect.y * vh / overlayCanvas.height,
+    cropRect.w * vw / overlayCanvas.width,
+    cropRect.h * vh / overlayCanvas.height
+  );
+
+  preprocessImage(img);
+  ctx.putImageData(img, 0, 0);
+
+  runOCR(canvas.toDataURL());
+}
+
+/* ------------------ IMAGE PREPROCESS ------------------ */
+function preprocessImage(img) {
+  for (let i = 0; i < img.data.length; i += 4) {
+    const gray =
+      0.299 * img.data[i] +
+      0.587 * img.data[i + 1] +
+      0.114 * img.data[i + 2];
+
+    const threshold = gray > 140 ? 255 : 0;
+
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = threshold;
+  }
+}
+
+/* ------------------ OCR ------------------ */
+async function runOCR(image) {
+  const result = await Tesseract.recognize(image, "eng");
+  fillEditForm(result.data.text);
+}
+
+/* ------------------ PARSE ------------------ */
+function fillEditForm(text) {
+  showScreen("editScreen");
+
+  editBarcode.value = currentBarcode;
+  editAddress.value = text;
 
   const pin = text.match(/\b\d{6}\b/);
-  const mob = text.match(/\b\d{10}\b/);
+  if (pin) editPin.value = pin[0];
 
-  document.getElementById("pincode").value = pin ? pin[0] : "";
-  document.getElementById("mobile").value = mob ? mob[0] : "";
-
-  status.textContent = "";
-  document.getElementById("editForm").hidden = false;
+  const phone = text.match(/\b\d{10}\b/);
+  if (phone) editPhone.value = phone[0];
 }
 
-// ---------------- SAVE ----------------
-document.getElementById("okBtn").onclick = () => {
-  records.push({
-    barcode: current.barcode,
-    name: document.getElementById("name").value,
-    address: document.getElementById("address").value,
-    pincode: document.getElementById("pincode").value,
-    mobile: document.getElementById("mobile").value
-  });
-
-  addToList();
-  resetUI();
-};
-
-function addToList() {
-  const li = document.createElement("li");
-  li.textContent = `${records.at(-1).barcode} | ${records.at(-1).pincode}`;
-  document.getElementById("scanList").appendChild(li);
+/* ------------------ STORAGE ------------------ */
+function initDB() {
+  const req = indexedDB.open("CourierDB", 1);
+  req.onupgradeneeded = e => {
+    db = e.target.result;
+    db.createObjectStore("records", { keyPath: "barcode" });
+  };
+  req.onsuccess = e => db = e.target.result;
 }
 
-// ---------------- EXPORT ----------------
-document.getElementById("exportBtn").onclick = () => {
-  let csv = "Barcode,Name,ToAddress,Pincode,Mobile\n";
-  records.forEach(r => {
-    csv += `"${r.barcode}","${r.name}","${r.address}","${r.pincode}","${r.mobile}"\n`;
-  });
+function saveRecord() {
+  const rec = {
+    barcode: editBarcode.value,
+    name: editName.value,
+    address: editAddress.value,
+    pin: editPin.value,
+    phone: editPhone.value
+  };
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "courier_export.csv";
-  a.click();
-};
-
-// ---------------- UI ----------------
-function resetUI() {
-  reader.hidden = true;
-  captureAddrBtn.hidden = true;
-  document.getElementById("editForm").hidden = true;
-  status.textContent = "";
+  const tx = db.transaction("records", "readwrite");
+  tx.objectStore("records").add(rec);
+  tx.oncomplete = () => {
+    showScreen("homeScreen");
+    loadList();
+  };
 }
 
-// ---------------- PWA INSTALL ----------------
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById("installBtn").hidden = false;
-});
+function loadList() {
+  if (!db) return;
+  const tx = db.transaction("records", "readonly");
+  const req = tx.objectStore("records").getAll();
+  req.onsuccess = () => {
+    recordList.innerHTML = "";
+    req.result.forEach(r => {
+      const li = document.createElement("li");
+      li.innerText = `${r.barcode} – ${r.pin}`;
+      recordList.appendChild(li);
+    });
+  };
+}
 
-document.getElementById("installBtn").onclick = async () => {
-  deferredPrompt.prompt();
-  deferredPrompt = null;
-};
+function isDuplicate(barcode) {
+  // quick UI-level check
+  return document.body.innerText.includes(barcode);
+}
 
-});
+/* ------------------ CSV ------------------ */
+function exportCSV() {
+  const tx = db.transaction("records", "readonly");
+  const req = tx.objectStore("records").getAll();
+  req.onsuccess = () => {
+    let csv = "Barcode,Name,Address,PIN,Phone\n";
+    req.result.forEach(r => {
+      csv += `"${r.barcode}","${r.name}","${r.address}","${r.pin}","${r.phone}"\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "courier.csv";
+    a.click();
+  };
+}
