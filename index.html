@@ -1,58 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
   <title>Courier Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
 
-  <script src="lib/html5-qrcode.min.js"></script>
-  <script src="lib/tesseract.min.js"></script>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+
+  <style>
+    body { font-family: Arial; margin: 0; padding: 10px; }
+    section { display: none; }
+    section.active { display: block; }
+
+    video, canvas {
+      width: 100%;
+      max-height: 60vh;
+      border: 1px solid #ccc;
+    }
+
+    .btn {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      font-size: 16px;
+    }
+
+    textarea, input {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 6px;
+    }
+
+    ul { padding-left: 20px; }
+  </style>
 </head>
 <body>
 
-<h2>Courier Scanner</h2>
+<!-- HOME -->
+<section id="homeScreen" class="active">
+  <button id="scanNewBtn" class="btn">Scan New</button>
+  <button id="exportBtn" class="btn">Export CSV</button>
+  <button id="installBtn" class="btn" style="display:none">Install App</button>
 
-<button id="scanNewBtn">Scan New</button>
-<button id="installBtn" hidden>Install App</button>
+  <h3>Scanned List</h3>
+  <ul id="recordList"></ul>
+</section>
 
-<div id="reader" hidden></div>
-
-<p id="status"></p>
+<!-- BARCODE -->
+<section id="barcodeScreen">
+  <h3>Scan Barcode</h3>
+  <video id="barcodeVideo"></video>
+  <p id="barcodeText"></p>
+  <button id="barcodeNextBtn" class="btn" disabled>Next</button>
+</section>
 
 <!-- ADDRESS CAPTURE -->
-<button id="captureAddrBtn" hidden>Capture Address</button>
+<section id="captureScreen">
+  <h3>Capture TO Address</h3>
+  <video id="addressVideo"></video>
+  <canvas id="overlayCanvas"></canvas>
+  <button id="captureBtn" class="btn">Capture Selected Area</button>
+</section>
 
-<!-- EDIT FORM -->
-<div id="editForm" hidden>
-  <h3>Confirm Details</h3>
+<!-- EDIT -->
+<section id="editScreen">
+  <h3>Edit Address</h3>
 
   <label>Barcode</label>
-  <input id="barcode" readonly>
+  <input id="editBarcode" readonly>
 
   <label>Name</label>
-  <input id="name">
+  <input id="editName">
 
-  <label>TO Address</label>
-  <textarea id="address"></textarea>
+  <label>Address</label>
+  <textarea id="editAddress" rows="4"></textarea>
 
-  <label>Pincode</label>
-  <input id="pincode">
+  <label>PIN</label>
+  <input id="editPin">
 
-  <label>Mobile</label>
-  <input id="mobile">
+  <label>Phone</label>
+  <input id="editPhone">
 
-  <button id="okBtn">OK</button>
-</div>
-
-<h3>Scanned List</h3>
-<ul id="scanList"></ul>
-
-<button id="exportBtn">Export CSV</button>
-
-<canvas id="snapshot" hidden></canvas>
+  <button id="okBtn" class="btn">OK</button>
+</section>
 
 <script src="app.js"></script>
 </body>
